@@ -8,9 +8,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ================= DB =================
 const db = mysql.createConnection({
-  host: "localhost", // ⚠️ palitan pag hosting na
+  host: "localhost",
   user: "root",
   password: "",
   database: "service_db"
@@ -24,7 +23,6 @@ db.connect(err => {
   }
 });
 
-// ================= REGISTER =================
 app.post("/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -33,7 +31,6 @@ app.post("/register", async (req, res) => {
       return res.json({ success: false, message: "Missing fields" });
     }
 
-    // check existing email
     db.query("SELECT * FROM users WHERE email=?", [email], async (err, result) => {
       if (err) {
         console.log(err);
@@ -44,7 +41,6 @@ app.post("/register", async (req, res) => {
         return res.json({ success: false, message: "Email already exists" });
       }
 
-      // 🔐 hash password
       const hashedPassword = await bcrypt.hash(password, 10);
 
       db.query(
@@ -67,7 +63,7 @@ app.post("/register", async (req, res) => {
   }
 });
 
-// ================= LOGIN =================
+
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
 
@@ -93,7 +89,7 @@ app.post("/login", (req, res) => {
   });
 });
 
-// ================= GET REQUESTS =================
+
 app.get("/requests", (req, res) => {
   let search = req.query.search;
 
@@ -118,7 +114,7 @@ app.get("/requests", (req, res) => {
   });
 });
 
-// ================= ADD =================
+
 app.post("/requests", (req, res) => {
   let { user_id, title, description } = req.body;
 
@@ -143,7 +139,7 @@ app.post("/requests", (req, res) => {
   );
 });
 
-// ================= UPDATE =================
+
 app.put("/requests/:id", (req, res) => {
   let { title, description, status } = req.body;
   const id = req.params.id;
@@ -170,7 +166,6 @@ app.put("/requests/:id", (req, res) => {
   );
 });
 
-// ================= DELETE =================
 app.delete("/requests/:id", (req, res) => {
   const id = req.params.id;
 
@@ -184,7 +179,6 @@ app.delete("/requests/:id", (req, res) => {
   });
 });
 
-// ================= DASHBOARD =================
 app.get("/dashboard", (req, res) => {
   db.query(`
     SELECT 
@@ -207,7 +201,6 @@ app.get("/dashboard", (req, res) => {
   });
 });
 
-// ================= FIX DATA =================
 app.get("/fix-data", (req, res) => {
   db.query(
     "UPDATE requests SET status = LOWER(TRIM(status))",
@@ -222,7 +215,6 @@ app.get("/fix-data", (req, res) => {
   );
 });
 
-// ================= SERVER =================
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
