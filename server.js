@@ -9,10 +9,11 @@ app.use(cors());
 app.use(express.json());
 
 const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "service_db"
+  host: process.env.MYSQLHOST,
+  user: process.env.MYSQLUSER,
+  password: process.env.MYSQLPASSWORD,
+  database: process.env.MYSQLDATABASE,
+  port: process.env.MYSQLPORT
 });
 
 db.connect(err => {
@@ -63,7 +64,6 @@ app.post("/register", async (req, res) => {
   }
 });
 
-
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
 
@@ -89,7 +89,6 @@ app.post("/login", (req, res) => {
   });
 });
 
-
 app.get("/requests", (req, res) => {
   let search = req.query.search;
 
@@ -114,7 +113,6 @@ app.get("/requests", (req, res) => {
   });
 });
 
-
 app.post("/requests", (req, res) => {
   let { user_id, title, description } = req.body;
 
@@ -138,7 +136,6 @@ app.post("/requests", (req, res) => {
     }
   );
 });
-
 
 app.put("/requests/:id", (req, res) => {
   let { title, description, status } = req.body;
@@ -210,7 +207,7 @@ app.get("/fix-data", (req, res) => {
         return res.json({ success: false });
       }
 
-      res.json({ success: true, message: "Data cleaned" });
+      res.json({ success: true });
     }
   );
 });
