@@ -33,10 +33,7 @@ app.post("/register", async (req, res) => {
     }
 
     db.query("SELECT * FROM users WHERE email=?", [email], async (err, result) => {
-      if (err) {
-        console.log(err);
-        return res.json({ success: false });
-      }
+      if (err) return res.json({ success: false });
 
       if (result.length > 0) {
         return res.json({ success: false, message: "Email already exists" });
@@ -47,19 +44,14 @@ app.post("/register", async (req, res) => {
       db.query(
         "INSERT INTO users (name,email,password) VALUES (?,?,?)",
         [name || "User", email, hashedPassword],
-        (err) => {
-          if (err) {
-            console.log(err);
-            return res.json({ success: false });
-          }
-
+        err => {
+          if (err) return res.json({ success: false });
           res.json({ success: true });
         }
       );
     });
 
-  } catch (error) {
-    console.log(error);
+  } catch {
     res.json({ success: false });
   }
 });
@@ -68,23 +60,19 @@ app.post("/login", (req, res) => {
   const { email, password } = req.body;
 
   db.query("SELECT * FROM users WHERE email=?", [email], async (err, result) => {
-    if (err) {
-      console.log(err);
-      return res.json({ success: false });
-    }
+    if (err) return res.json({ success: false });
 
     if (result.length > 0) {
       const user = result[0];
-
       const match = await bcrypt.compare(password, user.password);
 
       if (match) {
         res.json({ success: true, user });
       } else {
-        res.json({ success: false, message: "Wrong password" });
+        res.json({ success: false });
       }
     } else {
-      res.json({ success: false, message: "User not found" });
+      res.json({ success: false });
     }
   });
 });
@@ -104,11 +92,7 @@ app.get("/requests", (req, res) => {
   sql += " ORDER BY id DESC";
 
   db.query(sql, values, (err, result) => {
-    if (err) {
-      console.log(err);
-      return res.json([]);
-    }
-
+    if (err) return res.json([]);
     res.json(result);
   });
 });
@@ -126,12 +110,8 @@ app.post("/requests", (req, res) => {
   db.query(
     "INSERT INTO requests (user_id,title,description,status) VALUES (?,?,?,?)",
     [user_id || 1, title, description, "pending"],
-    (err) => {
-      if (err) {
-        console.log(err);
-        return res.json({ success: false });
-      }
-
+    err => {
+      if (err) return res.json({ success: false });
       res.json({ success: true });
     }
   );
@@ -152,12 +132,8 @@ app.put("/requests/:id", (req, res) => {
   db.query(
     "UPDATE requests SET title=?, description=?, status=? WHERE id=?",
     [title, description, status, id],
-    (err) => {
-      if (err) {
-        console.log(err);
-        return res.json({ success: false });
-      }
-
+    err => {
+      if (err) return res.json({ success: false });
       res.json({ success: true });
     }
   );
@@ -166,47 +142,36 @@ app.put("/requests/:id", (req, res) => {
 app.delete("/requests/:id", (req, res) => {
   const id = req.params.id;
 
-  db.query("DELETE FROM requests WHERE id=?", [id], (err) => {
-    if (err) {
-      console.log(err);
-      return res.json({ success: false });
-    }
-
+  db.query("DELETE FROM requests WHERE id=?", [id], err => {
+    if (err) return res.json({ success: false });
     res.json({ success: true });
   });
 });
 
 app.get("/dashboard", (req, res) => {
-  db.query(`
-    SELECT 
+  db.query(
+    `SELECT 
       COUNT(*) AS total,
       SUM(CASE WHEN LOWER(TRIM(status))='pending' THEN 1 ELSE 0 END) AS pending,
       SUM(CASE WHEN LOWER(TRIM(status))='done' THEN 1 ELSE 0 END) AS done
-    FROM requests
-  `, (err, result) => {
+    FROM requests`,
+    (err, result) => {
+      if (err) return res.json({ total: 0, pending: 0, done: 0 });
 
-    if (err) {
-      console.log(err);
-      return res.json({ total: 0, pending: 0, done: 0 });
+      res.json({
+        total: result[0].total || 0,
+        pending: result[0].pending || 0,
+        done: result[0].done || 0
+      });
     }
-
-    res.json({
-      total: result[0].total || 0,
-      pending: result[0].pending || 0,
-      done: result[0].done || 0
-    });
-  });
+  );
 });
 
 app.get("/fix-data", (req, res) => {
   db.query(
     "UPDATE requests SET status = LOWER(TRIM(status))",
-    (err) => {
-      if (err) {
-        console.log(err);
-        return res.json({ success: false });
-      }
-
+    err => {
+      if (err) return res.json({ success: false });
       res.json({ success: true });
     }
   );
