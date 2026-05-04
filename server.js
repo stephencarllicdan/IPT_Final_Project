@@ -8,13 +8,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const db = mysql.createConnection({
-  host: process.env.MYSQLHOST,
-  user: process.env.MYSQLUSER,
-  password: process.env.MYSQLPASSWORD,
-  database: process.env.MYSQLDATABASE,
-  port: process.env.MYSQLPORT
-});
+const db = mysql.createConnection(process.env.DATABASE_URL);
 
 db.connect(err => {
   if (err) {
@@ -29,14 +23,14 @@ app.post("/register", async (req, res) => {
     const { name, email, password } = req.body;
 
     if (!email || !password) {
-      return res.json({ success: false, message: "Missing fields" });
+      return res.json({ success: false });
     }
 
     db.query("SELECT * FROM users WHERE email=?", [email], async (err, result) => {
       if (err) return res.json({ success: false });
 
       if (result.length > 0) {
-        return res.json({ success: false, message: "Email already exists" });
+        return res.json({ success: false });
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
